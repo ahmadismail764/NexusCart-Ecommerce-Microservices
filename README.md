@@ -2,10 +2,6 @@
 
 **Goal:** Build a distributed microservices system with a Java Frontend and 5 Python Backends.
 
-**Deadline:** ~4 Weeks (Finish by Dec 15)
-
-**Team:** 3-4 Members
-
 ---
 
 ## 1️⃣ PART 1: The Architecture Blueprint
