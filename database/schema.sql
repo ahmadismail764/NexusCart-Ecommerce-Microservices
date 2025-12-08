@@ -3,9 +3,9 @@ CREATE DATABASE IF NOT EXISTS ecommerce_system;
 USE ecommerce_system;
 
 -- Create User (if not exists, this might require root privileges to run)
--- CREATE USER IF NOT EXISTS 'ecommerce_user'@'localhost' IDENTIFIED BY 'secure_password';
--- GRANT ALL PRIVILEGES ON ecommerce_system.* TO 'ecommerce_user'@'localhost';
--- FLUSH PRIVILEGES;
+CREATE USER IF NOT EXISTS 'ecommerce_user'@'localhost' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON ecommerce_system.* TO 'ecommerce_user'@'localhost';
+FLUSH PRIVILEGES;
 CREATE TABLE
     IF NOT EXISTS inventory (
         product_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -47,6 +47,27 @@ CREATE TABLE
         notification_type VARCHAR(50),
         message TEXT,
         sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+CREATE TABLE
+    IF NOT EXISTS orders (
+        order_id INT PRIMARY KEY AUTO_INCREMENT,
+        customer_id INT NOT NULL,
+        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        total_amount DECIMAL(10, 2) NOT NULL,
+        status VARCHAR(50) DEFAULT 'PENDING',
+        FOREIGN KEY (customer_id) REFERENCES customers (customer_id)
+    );
+
+CREATE TABLE
+    IF NOT EXISTS order_items (
+        item_id INT PRIMARY KEY AUTO_INCREMENT,
+        order_id INT NOT NULL,
+        product_id INT NOT NULL,
+        quantity INT NOT NULL,
+        price_at_purchase DECIMAL(10, 2) NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders (order_id),
+        FOREIGN KEY (product_id) REFERENCES inventory (product_id)
     );
 
 -- Insert some dummy data for Phase 1 testing
