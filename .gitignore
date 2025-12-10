@@ -82,3 +82,7 @@ package-lock.json
 
 # MySQL
 mysql-data/
+
+# Assignment files
+.zip
+.txt
