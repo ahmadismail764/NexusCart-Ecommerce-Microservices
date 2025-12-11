@@ -1,6 +1,6 @@
 # 🚀 SOA Project Canvas: E-Commerce Order Management System
 
-**Goal:** Build a distributed microservices system with a Java Frontend and 5 Python Backends.
+**Goal:** Build a distributed microservices system with a Java Server Pages Frontend and 5 Python Backends.
 
 ---
 
@@ -43,7 +43,7 @@ This is what we are building. Everyone needs to agree on these ports.
 
 - [ ] **Team Java:** Install Apache Tomcat 10+.
 - [ ] **Team Java:** Create a Servlet that makes an HTTP GET request to `http://localhost:5001/api/test`.
-- [ ] **Team Python:** Set up Virtual Env & Flask.
+- [x] **Team Python:** Set up Virtual Env & Flask.
 - [ ] **Team Python:** Create a simple route `/api/test` on Port 5001 that returns `{"status": "alive"}`.
 - [ ] **Integration Test:** Run both. Access the JSP page. Does it show the JSON from Python?
 

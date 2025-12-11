@@ -30,6 +30,7 @@ def check_inventory(product_id):
     if conn is None:
         return jsonify({"error": "Database connection failed"}), 500
     
+    cursor = None
     try:
         cursor = conn.cursor(dictionary=True)
         query = "SELECT product_id, quantity_available, unit_price FROM inventory WHERE product_id = %s"
@@ -37,11 +38,13 @@ def check_inventory(product_id):
         product = cursor.fetchone()
         
         if product:
+            # Cast to dict to satisfy linter
+            product_data = dict(product) # type: ignore
             return jsonify({
-                "product_id": product['product_id'],
-                "available": product['quantity_available'] > 0,
-                "stock": product['quantity_available'],
-                "price": float(product['unit_price'])
+                "product_id": product_data['product_id'], # type: ignore
+                "available": product_data['quantity_available'] > 0, # type: ignore
+                "stock": product_data['quantity_available'], # type: ignore
+                "price": float(product_data['unit_price']) # type: ignore
             })
         else:
             return jsonify({"error": "Product not found"}), 404
@@ -51,8 +54,9 @@ def check_inventory(product_id):
         return jsonify({"error": "Database query failed"}), 500
         
     finally:
-        if conn.is_connected():
+        if cursor:
             cursor.close()
+        if conn and conn.is_connected():
             conn.close()
 
 if __name__ == '__main__':

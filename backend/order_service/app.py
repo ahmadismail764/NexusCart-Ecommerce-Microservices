@@ -34,6 +34,12 @@ def create_order():
     if not customer_id or not products:
         return jsonify({"error": "Missing customer_id or products"}), 400
 
+    for p in products:
+        if 'product_id' not in p or 'quantity' not in p:
+             return jsonify({"error": "Invalid product data"}), 400
+        if int(p['quantity']) <= 0:
+             return jsonify({"error": "Quantity must be positive"}), 400
+
     # 1. Calculate Total Price (Call Pricing Service)
     try:
         pricing_response = requests.post(
@@ -54,7 +60,8 @@ def create_order():
     conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Database connection failed"}), 500
-        
+    
+    cursor = None
     try:
         cursor = conn.cursor()
         conn.start_transaction()
@@ -96,8 +103,9 @@ def create_order():
         return jsonify({"error": "Database transaction failed"}), 500
         
     finally:
-        if conn.is_connected():
+        if cursor:
             cursor.close()
+        if conn and conn.is_connected():
             conn.close()
 
 if __name__ == '__main__':

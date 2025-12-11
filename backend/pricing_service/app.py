@@ -30,6 +30,12 @@ def calculate_price():
     data = request.get_json()
     products = data.get('products', [])
     
+    for p in products:
+        if 'product_id' not in p or 'quantity' not in p:
+             return jsonify({"error": "Invalid product data"}), 400
+        if int(p['quantity']) <= 0:
+             return jsonify({"error": "Quantity must be positive"}), 400
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Database connection failed"}), 500
@@ -37,6 +43,7 @@ def calculate_price():
     total_amount = 0.0
     itemized_list = []
     
+    cursor = None
     try:
         cursor = conn.cursor(dictionary=True)
         
@@ -99,8 +106,9 @@ def calculate_price():
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
     finally:
-        if conn.is_connected():
+        if cursor:
             cursor.close()
+        if conn and conn.is_connected():
             conn.close()
 
 if __name__ == '__main__':
