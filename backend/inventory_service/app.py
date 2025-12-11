@@ -4,6 +4,8 @@ from mysql.connector import Error
 
 app = Flask(__name__)
 
+INVENTORY_SERVICE_URL = "http://localhost:5002/api/inventory/check"
+
 def get_db_connection():
     """Connect to the MySQL database"""
     try:

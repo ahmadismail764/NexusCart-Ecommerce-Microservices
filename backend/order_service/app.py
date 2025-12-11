@@ -5,6 +5,7 @@ from mysql.connector import Error
 
 app = Flask(__name__)
 
+ORDER_SERVICE_URL = "http://localhost:5001/api/orders/create"
 PRICING_SERVICE_URL = "http://localhost:5003/api/pricing/calculate"
 
 def get_db_connection():
