@@ -1,14 +1,12 @@
 from flask import Flask, request, jsonify
 from mysql.connector import Error
-import sys
-import os
 import requests
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import get_db_connection, close_db_connection
 
-
 app = Flask(__name__)
+
+# Service URLs
+# Note: These URLs assume the ports you defined in the PDF (5001-5005)
 INVENTORY_SERVICE_CHECK_URL = "http://localhost:5002/api/inventory/check_batch"
 INVENTORY_SERVICE_UPDATE_URL = "http://localhost:5002/api/inventory/update_stock"
 CUSTOMER_SERVICE_URL = "http://localhost:5004/api/customers"
@@ -57,6 +55,14 @@ def create_order():
         return jsonify({"error": "Missing customer_id"}), 400
     if not products:
         return jsonify({"error": "Missing products"}), 400
+
+    # Validate Customer
+    try:
+        cust_response = requests.get(f"{CUSTOMER_SERVICE_URL}/{customer_id}")
+        if cust_response.status_code == 404:
+            return jsonify({"error": "Customer not found"}), 400
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Customer Service unreachable: {e}"}), 503
         
     # 1. Check Inventory
     try:
@@ -113,10 +119,9 @@ def create_order():
         
         # 3. Update Stock
         try:
-             requests.post(INVENTORY_SERVICE_UPDATE_URL, json={"products": products})
+            requests.put(INVENTORY_SERVICE_UPDATE_URL, json={"products": products})
         except Exception as e:
-             print(f"Warning: Failed to update stock: {e}")
-             # In a real system, you might rollback or have a compensation transaction
+            print(f"Warning: Failed to update stock: {e}")
              
         # 4. Update Loyalty Points (1 point per $10)
         try:
@@ -124,13 +129,13 @@ def create_order():
             if points > 0:
                 requests.post(f"{CUSTOMER_SERVICE_URL}/{customer_id}/points", json={"points": points})
         except Exception as e:
-             print(f"Warning: Failed to update loyalty points: {e}")
+            print(f"Warning: Failed to update loyalty points: {e}")
 
         # 5. Send Notification
         try:
-             requests.post(NOTIFICATION_SERVICE_URL, json={"order_id": order_id})
+            requests.post(NOTIFICATION_SERVICE_URL, json={"order_id": order_id})
         except Exception as e:
-             print(f"Warning: Failed to trigger notification service: {e}")
+            print(f"Warning: Failed to trigger notification service: {e}")
         
         return jsonify({
             "message": "Order created successfully", 
@@ -150,6 +155,14 @@ def create_order():
 
 @app.route('/api/orders/customer/<int:customer_id>', methods=['GET'])
 def get_customer_orders(customer_id):
+    # Validate Customer
+    try:
+        cust_response = requests.get(f"{CUSTOMER_SERVICE_URL}/{customer_id}")
+        if cust_response.status_code == 404:
+            return jsonify({"error": "Customer not found"}), 400
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Customer Service unreachable: {e}"}), 503
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Database connection failed"}), 500
@@ -159,10 +172,13 @@ def get_customer_orders(customer_id):
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT order_id, total_amount, status, CAST(order_date AS CHAR) as order_date FROM orders WHERE customer_id = %s ORDER BY order_date DESC", (customer_id,))
         orders = cursor.fetchall()
-        
+
+        if not orders:
+            return jsonify({"message": "Customer has no orders"}), 404
+
         results = []
         for order in orders:
-            o_data = dict(order) # type: ignore            
+            o_data = dict(order) # type: ignore
             results.append(o_data)
             
         return jsonify(results)

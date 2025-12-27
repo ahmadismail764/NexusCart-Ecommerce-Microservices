@@ -117,40 +117,5 @@ def update_stock():
     finally:
         close_db_connection(conn, cursor)
 
-
-@app.route('/api/inventory/check', methods=['POST'])
-def check_inventory(product_id):
-    print(f"Checking inventory for Product ID: {product_id}")
-    
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    cursor = None
-    try:
-        cursor = conn.cursor(dictionary=True)
-        query = "SELECT product_id, product_name, quantity_available, unit_price FROM inventory WHERE product_id = %s"
-        cursor.execute(query, (product_id,))
-        product = cursor.fetchone()
-        
-        if product:
-            product_data = dict(product) # type: ignore
-            return jsonify({
-                "product_id": product_data['product_id'], # type: ignore
-                "product_name": product_data['product_name'], # type: ignore
-                "available": product_data['quantity_available'] > 0, # type: ignore
-                "stock": product_data['quantity_available'], # type: ignore
-                "price": float(product_data['unit_price']) # type: ignore
-            })
-        else:
-            return jsonify({"error": "Product not found"}), 404
-            
-    except Error as e:
-        print(f"Error: {e}")
-        return jsonify({"error": "Database query failed"}), 500
-        
-    finally:
-        close_db_connection(conn, cursor)
-
 if __name__ == '__main__':
     app.run(port=5002, debug=True)

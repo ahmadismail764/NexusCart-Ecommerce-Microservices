@@ -3,7 +3,7 @@ from mysql.connector import Error
 import os
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env.config'))
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
 def get_db_connection():
     try:
@@ -34,7 +34,10 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=F
     result = None
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute(query, params)
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
         
         if commit:
             conn.commit()

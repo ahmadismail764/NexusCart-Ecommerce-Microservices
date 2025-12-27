@@ -1,11 +1,5 @@
 from flask import Flask, jsonify, request
-import mysql.connector
 from mysql.connector import Error
-import sys
-import os
-
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import get_db_connection, close_db_connection
 
 app = Flask(__name__)
@@ -67,8 +61,7 @@ def create_customer():
         if cursor:
             cursor.close()
         if conn and conn.is_connected():
-            close_db_connection(conn, customer_id)
-
+            close_db_connection(conn, cursor)
 
 @app.route('/api/customers/<int:customer_id>', methods=['GET'])
 def get_customer(customer_id):
@@ -92,6 +85,7 @@ def get_customer(customer_id):
     finally:
         close_db_connection(conn, cursor)
 
+# FIX 2: Update Loyalty Points (Required by Order Service)
 @app.route('/api/customers/<int:customer_id>/points', methods=['POST'])
 def update_loyalty(customer_id):
     data = request.get_json()
