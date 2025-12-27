@@ -1,26 +1,19 @@
 from flask import Flask, request, jsonify
-import mysql.connector
-import requests
 from mysql.connector import Error
+import sys
+import os
+import requests
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import get_db_connection, close_db_connection
+
+
 app = Flask(__name__)
 INVENTORY_SERVICE_CHECK_URL = "http://localhost:5002/api/inventory/check_batch"
 INVENTORY_SERVICE_UPDATE_URL = "http://localhost:5002/api/inventory/update_stock"
 CUSTOMER_SERVICE_URL = "http://localhost:5004/api/customers"
 PRICING_SERVICE_URL = "http://localhost:5003/api/pricing/calculate"
-
-def get_db_connection():
-    """Connect to the MySQL database"""
-    try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='ecommerce_system',
-            user='ecommerce_user',
-            password='secure_password'
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        return None
+NOTIFICATION_SERVICE_URL = "http://localhost:5005/api/notifications/send"
 
 @app.route('/api/test', methods=['GET'])
 def test():
@@ -44,18 +37,15 @@ def get_order(order_id):
         cursor.execute("SELECT product_id, quantity, price_at_purchase FROM order_items WHERE order_id = %s", (order_id,))
         items = cursor.fetchall()
         
-        order_data = dict(order)
-        order_data['items'] = [dict(item) for item in items]
+        order_data = dict(order) # type: ignore
+        order_data['items'] = items # type: ignore
         
         return jsonify(order_data)
     except Error as e:
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
 @app.route('/api/orders/create', methods=['POST'])
 def create_order():
@@ -63,8 +53,10 @@ def create_order():
     customer_id = data.get('customer_id')
     products = data.get('products', [])
     
-    if not customer_id or not products:
-        return jsonify({"error": "Missing customer_id or products"}), 400
+    if not customer_id:
+        return jsonify({"error": "Missing customer_id"}), 400
+    if not products:
+        return jsonify({"error": "Missing products"}), 400
         
     # 1. Check Inventory
     try:
@@ -136,7 +128,7 @@ def create_order():
 
         # 5. Send Notification
         try:
-             requests.post("http://localhost:5005/api/notifications/send", json={"order_id": order_id})
+             requests.post(NOTIFICATION_SERVICE_URL, json={"order_id": order_id})
         except Exception as e:
              print(f"Warning: Failed to trigger notification service: {e}")
         
@@ -151,16 +143,11 @@ def create_order():
         conn.rollback()
         print(f"Error: {e}")
         return jsonify({"error": "Database transaction failed"}), 500
-    except Error as e:
-        conn.rollback()
-        print(f"Error: {e}")
-        return jsonify({"error": "Database transaction failed"}), 500
         
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
+
+
 @app.route('/api/orders/customer/<int:customer_id>', methods=['GET'])
 def get_customer_orders(customer_id):
     conn = get_db_connection()
@@ -170,14 +157,12 @@ def get_customer_orders(customer_id):
     cursor = None
     try:
         cursor = conn.cursor(dictionary=True)
-        # Fetch orders
         cursor.execute("SELECT order_id, total_amount, status, CAST(order_date AS CHAR) as order_date FROM orders WHERE customer_id = %s ORDER BY order_date DESC", (customer_id,))
         orders = cursor.fetchall()
         
         results = []
         for order in orders:
-            o_data = dict(order)
-            # Optional: fetch items for each order if needed, but summary is usually enough for history list
+            o_data = dict(order) # type: ignore            
             results.append(o_data)
             
         return jsonify(results)
@@ -185,10 +170,7 @@ def get_customer_orders(customer_id):
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)

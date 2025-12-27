@@ -1,20 +1,15 @@
 from flask import Flask, jsonify, request
 import mysql.connector
 from mysql.connector import Error
+import sys
+import os
+
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import get_db_connection, close_db_connection
+
 app = Flask(__name__)
-def get_db_connection():
-    """Connect to the MySQL database"""
-    try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='ecommerce_system',
-            user='ecommerce_user',
-            password='secure_password'
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        return None
+
 @app.route('/api/test', methods=['GET'])
 def test():
     return jsonify({"status": "alive", "service": "customer-service"})
@@ -34,17 +29,14 @@ def get_customers():
         
         customer_list = []
         for c in customers:
-            customer_list.append(dict(c))
+            customer_list.append(dict(c)) # type: ignore
             
         return jsonify(customer_list)
     except Error as e:
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
 @app.route('/api/customers', methods=['POST'])
 def create_customer():
@@ -75,32 +67,8 @@ def create_customer():
         if cursor:
             cursor.close()
         if conn and conn.is_connected():
-            conn.close()
+            close_db_connection(conn, customer_id)
 
-@app.route('/api/customers/<int:customer_id>/points', methods=['POST'])
-def update_points(customer_id):
-    data = request.get_json()
-    points = data.get('points', 0)
-    
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Database connection failed"}), 500
-    
-    cursor = None
-    try:
-        cursor = conn.cursor()
-        # Update points
-        cursor.execute("UPDATE customers SET loyalty_points = loyalty_points + %s WHERE customer_id = %s", (points, customer_id))
-        conn.commit()
-        return jsonify({"message": "Loyalty points updated"}), 200
-    except Error as e:
-        print(f"Error: {e}")
-        return jsonify({"error": "Failed to update points"}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
 
 @app.route('/api/customers/<int:customer_id>', methods=['GET'])
 def get_customer(customer_id):
@@ -111,23 +79,38 @@ def get_customer(customer_id):
     cursor = None
     try:
         cursor = conn.cursor(dictionary=True)
-        query = "SELECT customer_id, name, email, loyalty_points FROM customers WHERE customer_id = %s"
-        cursor.execute(query, (customer_id,))
+        cursor.execute("SELECT customer_id, name, email, loyalty_points FROM customers WHERE customer_id = %s", (customer_id,))
         customer = cursor.fetchone()
         
         if customer:
-            return jsonify(dict(customer))
+            return jsonify(dict(customer)) # type: ignore
         else:
             return jsonify({"error": "Customer not found"}), 404
-            
     except Error as e:
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
-        
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
+
+@app.route('/api/customers/<int:customer_id>/points', methods=['POST'])
+def update_loyalty(customer_id):
+    data = request.get_json()
+    points = data.get('points', 0)
+    
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
+        
+    cursor = None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE customers SET loyalty_points = loyalty_points + %s WHERE customer_id = %s", (points, customer_id))
+        conn.commit()
+        return jsonify({"message": "Loyalty points updated"}), 200
+    except Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db_connection(conn, cursor)
+
 if __name__ == '__main__':
     app.run(port=5004, debug=True)

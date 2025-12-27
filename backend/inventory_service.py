@@ -1,27 +1,15 @@
 from flask import Flask, jsonify, request
-import mysql.connector
 from mysql.connector import Error
+from utils import get_db_connection, close_db_connection
+
 app = Flask(__name__)
-INVENTORY_SERVICE_URL = "http://localhost:5002/api/inventory/check"
-def get_db_connection():
-    """Connect to the MySQL database"""
-    try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='ecommerce_system',
-            user='ecommerce_user',
-            password='secure_password'
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        return None
+
 @app.route('/api/test', methods=['GET'])
 def test():
     return jsonify({"status": "alive", "service": "inventory-service"})
+
 @app.route('/api/inventory/products', methods=['GET'])
-def get_products():
-    """Get all products from inventory"""
+def get_products(): 
     conn = get_db_connection()
     if conn is None:
         return jsonify({"error": "Database connection failed"}), 500
@@ -29,17 +17,17 @@ def get_products():
     cursor = None
     try:
         cursor = conn.cursor(dictionary=True)
-        query = "SELECT product_id, product_name, quantity_available, unit_price FROM inventory"
+        query = "SELECT product_id, product_name, quantity_available, unit_price FROM inventory WHERE quantity_available > 0"
         cursor.execute(query)
         products = cursor.fetchall()
         
         product_list = []
-        for p in products:
+        for prod in products:
             product_list.append({
-                "product_id": p['product_id'],
-                "product_name": p['product_name'],
-                "stock": p['quantity_available'],
-                "price": float(p['unit_price'])
+                "product_id": prod['product_id'], # type: ignore
+                "product_name": prod['product_name'], # type: ignore
+                "stock": prod['quantity_available'], # type: ignore
+                "price": float(prod['unit_price']) # type: ignore
             })
             
         return jsonify(product_list)
@@ -49,14 +37,10 @@ def get_products():
         return jsonify({"error": "Database query failed"}), 500
         
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
 @app.route('/api/inventory/check_batch', methods=['POST'])
 def check_inventory_batch():
-    """Check stock for multiple products"""
     data = request.get_json()
     products = data.get('products', [])
     
@@ -78,15 +62,15 @@ def check_inventory_batch():
             item = cursor.fetchone()
             
             if item:
-                is_avail = item['quantity_available'] >= req_qty
+                is_avail = item['quantity_available'] >= req_qty # type: ignore
                 if not is_avail:
                     all_available = False
                 results.append({
-                    "product_id": item['product_id'],
-                    "available": is_avail,
-                    "current_stock": item['quantity_available'],
-                    "requested": req_qty,
-                    "price": float(item['unit_price'])
+                    "product_id": item['product_id'], # type: ignore
+                    "available": is_avail, 
+                    "current_stock": item['quantity_available'], # type: ignore
+                    "requested": req_qty, 
+                    "price": float(item['unit_price']) # type: ignore
                 })
             else:
                 all_available = False
@@ -102,14 +86,10 @@ def check_inventory_batch():
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
-@app.route('/api/inventory/update_stock', methods=['POST'])
+@app.route('/api/inventory/update_stock', methods=['PUT'])
 def update_stock():
-    """Update stock after order"""
     data = request.get_json()
     products = data.get('products', [])
     
@@ -125,7 +105,6 @@ def update_stock():
         for p in products:
             product_id = p.get('product_id')
             qty = p.get('quantity')
-            # Simply deduct, assuming check was done before
             cursor.execute("UPDATE inventory SET quantity_available = quantity_available - %s WHERE product_id = %s", (qty, product_id))
             
         conn.commit()
@@ -136,14 +115,11 @@ def update_stock():
         print(f"Error: {e}")
         return jsonify({"error": "Stock update failed"}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
-@app.route('/api/inventory/check/<int:product_id>', methods=['GET'])
+
+@app.route('/api/inventory/check', methods=['POST'])
 def check_inventory(product_id):
-    # Backward compatibility if needed, or simply keep it
     print(f"Checking inventory for Product ID: {product_id}")
     
     conn = get_db_connection()
@@ -158,13 +134,13 @@ def check_inventory(product_id):
         product = cursor.fetchone()
         
         if product:
-            product_data = dict(product)
+            product_data = dict(product) # type: ignore
             return jsonify({
-                "product_id": product_data['product_id'],
-                "product_name": product_data['product_name'],
-                "available": product_data['quantity_available'] > 0,
-                "stock": product_data['quantity_available'],
-                "price": float(product_data['unit_price'])
+                "product_id": product_data['product_id'], # type: ignore
+                "product_name": product_data['product_name'], # type: ignore
+                "available": product_data['quantity_available'] > 0, # type: ignore
+                "stock": product_data['quantity_available'], # type: ignore
+                "price": float(product_data['unit_price']) # type: ignore
             })
         else:
             return jsonify({"error": "Product not found"}), 404
@@ -174,9 +150,7 @@ def check_inventory(product_id):
         return jsonify({"error": "Database query failed"}), 500
         
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
+
 if __name__ == '__main__':
     app.run(port=5002, debug=True)

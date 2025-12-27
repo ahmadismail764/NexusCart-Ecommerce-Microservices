@@ -1,25 +1,15 @@
 from flask import Flask, request, jsonify
-import mysql.connector
 import requests
 from mysql.connector import Error
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import get_db_connection, close_db_connection
 
 app = Flask(__name__)
 
 INVENTORY_SERVICE_URL = "http://localhost:5002/api/inventory/check"
-
-def get_db_connection():
-    """Connect to the MySQL database"""
-    try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='ecommerce_system',
-            user='ecommerce_user',
-            password='secure_password'
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        return None
     
 @app.route('/api/test', methods=['GET'])
 def test():
@@ -49,7 +39,7 @@ def calculate_price():
         
         cursor.execute("SELECT tax_rate FROM tax_rates WHERE region = 'US'")
         tax_record = cursor.fetchone()
-        tax_rate = float(tax_record['tax_rate']) if tax_record else 0.0
+        tax_rate = float(tax_record['tax_rate']) if tax_record else 0.0 # type: ignore
         
         for item in products:
             p_id = item['product_id']
@@ -70,9 +60,9 @@ def calculate_price():
             
             discount_percent = 0.0
             for rule in rules:
-                if qty >= rule['min_quantity']: 
-                    if float(rule['discount_percentage']) > discount_percent: 
-                        discount_percent = float(rule['discount_percentage']) 
+                if qty >= rule['min_quantity']: # type: ignore
+                    if float(rule['discount_percentage']) > discount_percent: # type: ignore
+                        discount_percent = float(rule['discount_percentage']) # type: ignore
             
             gross_price = base_price * qty
             discount_amount = gross_price * (discount_percent / 100.0)
@@ -101,10 +91,7 @@ def calculate_price():
         print(f"Error: {e}")
         return jsonify({"error": "Database query failed"}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
+        close_db_connection(conn, cursor)
 
 if __name__ == '__main__':
     app.run(port=5003, debug=True)

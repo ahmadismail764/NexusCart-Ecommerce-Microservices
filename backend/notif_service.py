@@ -3,23 +3,17 @@ from flask import Flask, jsonify, request
 import requests
 import mysql.connector
 from mysql.connector import Error
+import sys
+import os
+
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import get_db_connection, close_db_connection
+
 app = Flask(__name__)
 ORDER_SERVICE_URL = "http://localhost:5001/api/orders"
 CUSTOMER_SERVICE_URL = "http://localhost:5004/api/customers"
 INVENTORY_SERVICE_URL = "http://localhost:5002/api/inventory/check"
-def get_db_connection():
-    """Connect to the MySQL database"""
-    try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='ecommerce_system',
-            user='ecommerce_user',
-            password='secure_password'
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        return None
 @app.route('/api/test', methods=['GET'])
 def test():
     return jsonify({"status": "alive", "service": "notification-service"})
@@ -74,15 +68,16 @@ def send_notification():
     print("---------------------------------------------------")
     conn = get_db_connection()
     if conn:
+        cursor = None
         try:
             cursor = conn.cursor()
             query = "INSERT INTO notification_log (order_id, customer_id, notification_type, message) VALUES (%s, %s, %s, %s)"
             cursor.execute(query, (order_id, customer_id, "EMAIL", email_body))
             conn.commit()
-            cursor.close()
-            conn.close()
         except Error as e:
             print(f"Error logging notification: {e}")
+        finally:
+            close_db_connection(conn, cursor)
     return jsonify({"status": "sent", "email": email}), 200
 if __name__ == '__main__':
     app.run(port=5005, debug=True)
