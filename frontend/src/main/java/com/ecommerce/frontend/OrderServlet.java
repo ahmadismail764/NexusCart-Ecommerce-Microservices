@@ -18,6 +18,7 @@ public class OrderServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String customerId = req.getParameter("customerId");
+        String cartData = req.getParameter("cartData"); // Expects JSON array string: [{"product_id":1, "quantity":2}, ...]
         String productId = req.getParameter("productId");
         String quantity = req.getParameter("quantity");
         // Create JSON object structure:
@@ -30,14 +31,26 @@ public class OrderServlet extends HttpServlet {
         JSONObject orderJson = new JSONObject();
         orderJson.put("customer_id", Integer.parseInt(customerId));
         
-        JSONObject productItem = new JSONObject();
-        productItem.put("product_id", Integer.parseInt(productId));
-        productItem.put("quantity", Integer.parseInt(quantity));
-        
         JSONArray productsArray = new JSONArray();
-        productsArray.put(productItem);
+        
+        if (cartData != null && !cartData.isEmpty()) {
+            // New Cart Flow
+            try {
+                productsArray = new JSONArray(cartData);
+            } catch (Exception e) {
+                 // Fallback or error
+                 e.printStackTrace();
+            }
+        } else if (productId != null && quantity != null) {
+            // Legacy / Single Item Flow
+            JSONObject productItem = new JSONObject();
+            productItem.put("product_id", Integer.parseInt(productId));
+            productItem.put("quantity", Integer.parseInt(quantity));
+            productsArray.put(productItem);
+        }
         
         orderJson.put("products", productsArray);
+        // total_amount will be calculated by backend, but we can send 0 equivalent
         orderJson.put("total_amount", new BigDecimal("0.00"));
         try {
             HttpClient client = HttpClient.newHttpClient();
@@ -56,8 +69,9 @@ public class OrderServlet extends HttpServlet {
             if (response.statusCode() == 201) {
                 int orderId = jsonResponse.getInt("order_id");
                 double totalAmount = jsonResponse.getDouble("total_amount");
+                int pointsEarned = jsonResponse.optInt("points_earned", 0);
                 
-                resp.sendRedirect("confirmation.jsp?orderId=" + orderId + "&totalAmount=" + totalAmount);
+                resp.sendRedirect("confirmation.jsp?orderId=" + orderId + "&totalAmount=" + totalAmount + "&pointsEarned=" + pointsEarned);
             } else {
                 resp.setContentType("text/html");
                 resp.getWriter().println("<h1>Error Creating Order</h1>");

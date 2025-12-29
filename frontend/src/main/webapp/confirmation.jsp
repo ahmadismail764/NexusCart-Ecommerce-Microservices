@@ -17,12 +17,29 @@
 </head>
 <body>
     <div class="container">
-        <h1>Order Confirmed!</h1>
-        <p>Thank you for your purchase.</p>
-        <p>Your Order ID is: <div class="order-id"><%= request.getParameter("orderId") %></div></p>
-        <p class="total">Total Amount: $<%= request.getParameter("totalAmount") %></p>
-        <p>A confirmation email has been sent to you.</p>
-        <a href="index.jsp" class="btn">Continue Shopping</a>
+        <header>
+            <h1>Order Confirmed!</h1>
+        </header>
+
+        <div class="form-card" style="text-align: center;">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">🎉</div>
+            <h2 style="color: #10b981; margin-bottom: 1rem;">Thank you for your purchase!</h2>
+            <p>Your order (ID: <%= request.getParameter("orderId") %>) has been successfully placed.</p>
+            <p style="font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0;">
+                Total Amount: $<%= request.getParameter("totalAmount") %>
+            </p>
+            
+            <% 
+                String points = request.getParameter("pointsEarned");
+                if (points != null && !points.equals("0")) { 
+            %>
+                <div style="background: #ecfdf5; color: #065f46; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <strong>You earned <%= points %> Loyalty Points!</strong>
+                </div>
+            <% } %>
+
+            <a href="index.jsp" class="btn">Continue Shopping</a>
+        </div>
     </div>
 </body>
 </html>

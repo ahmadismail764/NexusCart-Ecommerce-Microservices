@@ -1,0 +1,242 @@
+{
+    "info": {
+        "_postman_id": "ecommerce-soa-master",
+        "name": "SOA Master Test Suite (All Services)",
+        "description": "Comprehensive test suite for Order, Inventory, Pricing, Customer, and Notification services.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Inventory Service (5002)",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5002/api/test"
+                    }
+                },
+                {
+                    "name": "Get All Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5002/api/inventory/products"
+                    }
+                },
+                {
+                    "name": "Check Single Product (GET)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5002/api/inventory/check/1"
+                    }
+                },
+                {
+                    "name": "Batch Check (POST)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"products\": [{\"product_id\": 1, \"quantity\": 1}, {\"product_id\": 2, \"quantity\": 500}]}"
+                        },
+                        "url": "http://localhost:5002/api/inventory/check_batch"
+                    }
+                },
+                {
+                    "name": "Update Stock (PUT)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"products\": [{\"product_id\": 1, \"quantity\": 1}]}"
+                        },
+                        "url": "http://localhost:5002/api/inventory/update_stock"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "2. Customer Service (5004)",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5004/api/test"
+                    }
+                },
+                {
+                    "name": "Get All Customers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5004/api/customers"
+                    }
+                },
+                {
+                    "name": "Get Single Customer",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5004/api/customers/1"
+                    }
+                },
+                {
+                    "name": "Create Customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\": \"Test User\", \"email\": \"test@example.com\"}"
+                        },
+                        "url": "http://localhost:5004/api/customers"
+                    }
+                },
+                {
+                    "name": "Update Loyalty Points",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"points\": 50}"
+                        },
+                        "url": "http://localhost:5004/api/customers/1/points"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "3. Pricing Service (5003)",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5003/api/test"
+                    }
+                },
+                {
+                    "name": "Calculate Price",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"products\": [{\"product_id\": 1, \"quantity\": 2}, {\"product_id\": 2, \"quantity\": 5}]}"
+                        },
+                        "url": "http://localhost:5003/api/pricing/calculate"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "4. Order Service (5001)",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5001/api/test"
+                    }
+                },
+                {
+                    "name": "Create Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"customer_id\": 1, \"products\": [{\"product_id\": 1, \"quantity\": 1}, {\"product_id\": 2, \"quantity\": 2}]}"
+                        },
+                        "url": "http://localhost:5001/api/orders/create"
+                    }
+                },
+                {
+                    "name": "Get Order",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5001/api/orders/1"
+                    }
+                },
+                {
+                    "name": "Get Customer Order History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5001/api/orders/customer/1"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "5. Notification Service (5005)",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "http://localhost:5005/api/test"
+                    }
+                },
+                {
+                    "name": "Send Manual Notification",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"order_id\": 1}"
+                        },
+                        "url": "http://localhost:5005/api/notifications/send"
+                    }
+                }
+            ]
+        }
+    ]
+}
