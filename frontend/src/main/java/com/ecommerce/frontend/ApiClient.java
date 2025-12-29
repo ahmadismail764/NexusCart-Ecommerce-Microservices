@@ -133,27 +133,5 @@ public class ApiClient {
         return products;
     }
 
-    public Map<String, Object> getProduct(String productId) {
-        Map<String, Object> product = new HashMap<>();
-        try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(INVENTORY_SERVICE_URL + "/inventory/check/" + productId))
-                    .GET()
-                    .build();
-            
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            
-            if (response.statusCode() == 200) {
-                JSONObject obj = new JSONObject(response.body());
-                product.put("id", obj.getInt("product_id"));
-                product.put("name", obj.getString("product_name"));
-                product.put("price", obj.getDouble("price"));
-                product.put("stock", obj.getInt("stock"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return product;
-    }
+
 }

@@ -6,7 +6,13 @@
     Map<String, Object> product = null;
     if (productId != null && !productId.isEmpty()) {
         ApiClient client = new ApiClient();
-        product = client.getProduct(productId);
+        java.util.List<Map<String, Object>> allProducts = client.getProducts();
+        for (Map<String, Object> p : allProducts) {
+            if (String.valueOf(p.get("id")).equals(productId)) {
+                product = p;
+                break;
+            }
+        }
     }
 %>
 <html>
