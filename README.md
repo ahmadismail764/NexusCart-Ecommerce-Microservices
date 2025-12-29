@@ -24,27 +24,23 @@ The system uses a unified MySQL database (`ecommerce_system`) to maintain relati
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Setup & Installation
 
 ### Prerequisites
 
-- Python 3.8+
-- MySQL Server 8.0
-- Postman (for testing)
+The project requires **Python 3.8+** and **MySQL Server 8.0**. **Postman** is recommended for API testing.
 
-### 1. Database Setup
+### Database Configuration
 
-1. Open your MySQL Workbench or terminal.
-2. Create the schema `ecommerce_system`.
-3. Run the provided SQL script to initialize tables and seed data:
+The system uses a MySQL database named `ecommerce_system`. The schema and initial data are provided in `database/schema.sql`, which can be imported to initialize the database environment.
 
 ```bash
 mysql -u root -p ecommerce_system < database/schema.sql
 ```
 
-### 2. Installation
+### Environment Configuration
 
-Install the required Python dependencies:
+Python dependencies can be installed in a virtual environment using the following commands:
 
 ```bash
 py -m venv .venv
@@ -52,9 +48,9 @@ py -m venv .venv
 pip install flask mysql-connector-python requests
 ```
 
-### 3. Running the Services
+### Service Deployment
 
-You can start all 5 microservices simultaneously using the provided automation script.
+The microservices are designed to run concurrently. Each service can be started using the Python interpreter:
 
 ```bash
 python backend/order_service.py
@@ -66,15 +62,15 @@ python backend/notif_service.py
 
 ---
 
-## 🧪 Testing with Postman
+## 🧪 API Testing
 
-A comprehensive **Postman Collection** is included (`test_suite.postman_collection.json`) to test all endpoints.
+A **Postman Collection** (`test_suite.postman_collection.json`) is provided to facilitate endpoint testing and validation.
 
-**Key Scenarios:**
+The collection covers primary business workflows:
 
-1. **Shopping Flow:** Browse Inventory → Calculate Batch Price → Create Order.
-2. **Loyalty System:** Verify points update in Customer Profile after purchase.
-3. **Order History:** Retrieve past orders for a specific customer.
+- **Shopping Flow:** End-to-end simulation from inventory browsing and price calculation to order creation.
+- **Loyalty System:** Validation of loyalty point updates within customer profiles post-purchase.
+- **Order History:** Retrieval and verification of past order records for specific customers.
 
 ---
 
