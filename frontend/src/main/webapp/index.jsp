@@ -63,7 +63,12 @@
                 console.error("Quantity input not found for id:", id);
                 return;
             }
-            const quantity = parseInt(qtyInput.value) || 1;
+            const quantity = parseInt(qtyInput.value);
+            
+            if (isNaN(quantity) || quantity < 1) {
+                alert("Please enter a valid quantity (minimum 1)");
+                return;
+            }
             
             const cart = JSON.parse(localStorage.getItem('cart') || '[]');
             const existing = cart.find(item => item.id === id);

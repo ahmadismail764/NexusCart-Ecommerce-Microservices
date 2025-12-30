@@ -56,6 +56,11 @@ def create_order():
     if not products:
         return jsonify({"error": "Missing products"}), 400
 
+    # Validate quantities
+    for product in products:
+        if product.get('quantity', 0) <= 0:
+            return jsonify({"error": f"Invalid quantity for product {product.get('product_id')}"}), 400
+
     # Validate Customer
     try:
         cust_response = requests.get(f"{CUSTOMER_SERVICE_URL}/{customer_id}")

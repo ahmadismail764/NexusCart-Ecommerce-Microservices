@@ -129,7 +129,11 @@
 
         function updateQuantity(index, newQty) {
             const qty = parseInt(newQty);
-            if (qty < 1) return;
+            if (isNaN(qty) || qty < 1) {
+                alert("Quantity must be at least 1");
+                loadCart();
+                return;
+            }
             
             const cart = JSON.parse(localStorage.getItem('cart'));
             cart[index].quantity = qty;

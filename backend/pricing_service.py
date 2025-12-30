@@ -1,8 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
 from mysql.connector import Error
-import sys
-import os
 
 # Import utils directly (since they are in the same backend folder)
 from utils import get_db_connection, close_db_connection
