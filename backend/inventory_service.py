@@ -28,8 +28,7 @@ def get_products():
                 "product_name": prod['product_name'], # type: ignore
                 "stock": prod['quantity_available'], # type: ignore
                 "price": float(prod['unit_price']) # type: ignore
-            })
-            
+            })            
         return jsonify(product_list)
             
     except Error as e:

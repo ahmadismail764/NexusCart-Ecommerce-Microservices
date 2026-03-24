@@ -40,7 +40,7 @@ def send_notification():
     try:
         cust_resp = requests.get(f"{CUSTOMER_SERVICE_URL}/{customer_id}")
         if cust_resp.status_code != 200:
-             return jsonify({"error": "Failed to fetch customer details"}), 400
+            return jsonify({"error": "Failed to fetch customer details"}), 400
         customer_data = cust_resp.json()
         email = customer_data['email']
         name = customer_data['name']
